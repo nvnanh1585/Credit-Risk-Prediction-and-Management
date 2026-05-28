@@ -14,22 +14,32 @@ Mục tiêu không chỉ dừng lại ở việc tối ưu chỉ số mô hình,
 
 Thay vì impute đơn thuần, dự án phân tích cấu trúc thiếu dữ liệu và phát hiện 9/11 biến có tín hiệu Missing Not At Random có ý nghĩa thống kê. Các missing flag được tạo ra như biến độc lập, khai thác tín hiệu hành vi ẩn trong dữ liệu thiếu.
 
-| Biến thiếu | Bad rate khi thiếu | Bad rate khi có | Chênh lệch |
-|---|---|---|---|
-| VALUE_MISSING | 93,75% | 18,54% | +75,21 điểm |
-| DEBTINC_MISSING | 62,04% | 8,59% | +53,45 điểm |
-| CLAGE_MISSING | 25,32% | 19,66% | +5,67 điểm |
+| Biến thiếu | Số hồ sơ thiếu | Bad rate khi thiếu | Bad rate khi có | Chênh lệch | Ý nghĩa |
+|---|---|---|---|---|---|
+| VALUE_MISSING | 112 (1,9%) | 93,75% | 18,54% | +75,21 điểm | Vay thế chấp không có định giá — hồ sơ bất thường nghiêm trọng |
+| DEBTINC_MISSING | 1.267 (21,3%) | 62,04% | 8,59% | +53,45 điểm | Không khai báo thu nhập — đang che giấu gánh nặng nợ |
+| CLAGE_MISSING | 308 (5,2%) | 25,32% | 19,66% | +5,67 điểm | Có thể là khách hàng mới, chưa có lịch sử ổn định |
+| DELINQ_MISSING | 580 (9,7%) | 12,41% | 20,76% | -8,35 điểm | Khách hàng mới chưa có lịch sử vi phạm — tín hiệu tốt |
+| DEROG_MISSING | 708 (11,9%) | 12,29% | 20,98% | -8,69 điểm | Chưa từng bị báo cáo xấu — tín hiệu tốt |
+| YOJ_MISSING | 515 (8,6%) | 12,62% | 20,64% | -8,02 điểm | Người mới đi làm hoặc sinh viên — rủi ro thấp hơn trung bình |
+| JOB_MISSING | 279 (4,7%) | 8,24% | 20,52% | -12,28 điểm | Khách hàng tài sản cao từ chối khai báo — rủi ro thấp hơn |
+| NINQ_MISSING | 510 (8,6%) | 14,71% | 20,44% | -5,73 điểm | Ít hoạt động tín dụng — có thể là khách hàng thận trọng |
+| MORTDUE_MISSING | 518 (8,7%) | 19,88% | 19,94% | -0,06 điểm | Thiếu do quy trình, không phản ánh hành vi |
 
 ### 2. Feature Engineering
 
 Xây dựng các biến mới dựa trên kiến thức nghiệp vụ tín dụng, không phải biến đổi toán học đơn thuần.
 
-| Biến mới | Công thức | IV | Ý nghĩa |
-|---|---|---|---|
-| DEROG_DELINQ_SUM | DEROG + DELINQ | 0,4901 | Bắt hiệu ứng cộng dồn vi phạm |
-| LOAN_LOG | log(1 + LOAN) | 0,1891 | Gấp đôi IV so với biến gốc |
-| CREDIT_AGE_INQUIRY | CLAGE × NINQ | 0,0370 | Phát hiện profile vay khẩn cấp |
-
+| Biến mới | Công thức | IV | Mức độ | Ý nghĩa |
+|---|---|---|---|---|
+| DEROG_DELINQ_SUM | DEROG + DELINQ | 0,4901 | Strong | Bắt hiệu ứng cộng dồn vi phạm — vượt cả DELINQ đơn (0,4382) |
+| DEROG_DELINQ_MAX | max(DEROG, DELINQ) | 0,4092 | Strong | Bắt trường hợp một loại vi phạm cực độ |
+| LOAN_LOG | log(1 + LOAN) | 0,1891 | Medium | Gấp đôi IV so với biến gốc (0,091) — giảm right-skew hiệu quả |
+| YOJ_BIN | Phân nhóm YOJ thành 5 khoảng | 0,0809 | Weak | Bắt hiệu ứng ngưỡng thâm niên mà biến liên tục không thể hiện |
+| MORTDUE_LOG | log(1 + MORTDUE) | 0,0439 | Weak | Giảm độ lệch phân phối MORTDUE |
+| CREDIT_AGE_INQUIRY | CLAGE × NINQ | 0,0370 | Weak | Phát hiện profile lịch sử dài nhưng nhiều truy vấn gần đây |
+| LOAN_SQ | LOAN² | 0,0119 | Useless | Không thêm giá trị — bị loại ở tất cả các mô hình |
+| MORTDUE_SQ | MORTDUE² | 0,0032 | Useless | Polynomial naïve không phù hợp dữ liệu tín dụng |
 ### 3. WOE Encoding & Information Value
 
 Toàn bộ biến được mã hóa WOE trên tập train và áp dụng nguyên bản lên tập test. Bộ lọc IV loại các biến Useless (IV < 0,02), giữ lại 19 biến cho pipeline mô hình.
