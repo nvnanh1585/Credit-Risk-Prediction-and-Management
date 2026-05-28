@@ -1,4 +1,4 @@
-# Credit Risk Prediction - Dự báo và Quản trị Rủi ro Tín dụng
+# Credit Risk Prediction & Management - Dự báo và Quản trị Rủi ro Tín dụng
 
 ## Giới thiệu
 
